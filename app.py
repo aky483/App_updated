@@ -692,25 +692,22 @@ def create_word_document(content):
             continue
 
         text = line.strip()
+        text = text.replace("**", "")  # ✅ Remove bold markers early
 
         # Detect if it's a section header
         is_section_header = text.endswith(':') and text == text.upper()
 
-        # Update current section for context-aware formatting
         if is_section_header:
-            current_section = text[:-1].lower()  # e.g., "WORK EXPERIENCE:" → "work experience"
-            doc.add_paragraph()  # Add space before new section
+            current_section = text[:-1].lower()
+            doc.add_paragraph()
 
-        # 🔵 Add spacing before company name lines in work experience
         if current_section == "work experience" and "|" in text and not text.startswith("•"):
             spacer_para = doc.add_paragraph()
-            spacer_para.paragraph_format.space_after = Pt(1)  # Subtle spacing (~2 pt)
-
+            spacer_para.paragraph_format.space_after = Pt(1)
 
         para = doc.add_paragraph()
         run = para.add_run(text)
 
-        # 🔵 Bold logic begins here:
         if is_section_header:
             run.bold = True
             add_bottom_border(para)
@@ -721,9 +718,7 @@ def create_word_document(content):
         elif current_section == "projects" and not text.startswith("•"):
             run.bold = True
 
-        elif '**' in text:
-            run.text = text.replace("**", "")  # 🔴 Removed bolding logic
-
+        # ✅ No need for bolding '**' anymore — already cleaned
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         para.paragraph_format.space_after = Pt(2)
         para.paragraph_format.line_spacing = 1.0
