@@ -23,16 +23,20 @@ except Exception as e:
 def get_gemini_response(prompt: str, model: str = "gemini-2.5-flash") -> str:
     """Get response from Gemini AI with error handling"""
     try:
-        if not client:
-            st.error("Gemini AI client not initialized")
-            return ""
-        
-        response = client.generate_content(
-        prompt,
-        generation_config=types.GenerationConfig(
-            temperature=0.2
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))  # ✅ Ensure dynamic config
+        model_instance = genai.GenerativeModel(model)  # ✅ Use dynamic model name
+
+        response = model_instance.generate_content(
+            prompt,
+            generation_config=types.GenerationConfig(
+                temperature=0.2
+            )
         )
-    )
+
+        return response.text if response.text else ""
+    except Exception as e:
+        st.error(f"AI processing error: {str(e)}")
+        return ""
 
         return response.text if response.text else ""
     except Exception as e:
