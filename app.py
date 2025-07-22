@@ -692,33 +692,33 @@ def create_word_document(content):
             continue
 
         text = line.strip()
-        text = text.replace("**", "")  # ✅ Remove bold markers early
+        clean_text = text.replace("**", "")  # ✅ Remove markdown asterisks only
 
-        # Detect if it's a section header
-        is_section_header = text.endswith(':') and text == text.upper()
+        # Detect if it's a section header (fully uppercase and ends with ":")
+        is_section_header = clean_text.endswith(':') and clean_text == clean_text.upper()
 
         if is_section_header:
-            current_section = text[:-1].lower()
+            current_section = clean_text[:-1].lower()
             doc.add_paragraph()
 
-        if current_section == "work experience" and "|" in text and not text.startswith("•"):
+        if current_section == "work experience" and "|" in clean_text and not clean_text.startswith("•"):
             spacer_para = doc.add_paragraph()
             spacer_para.paragraph_format.space_after = Pt(1)
 
         para = doc.add_paragraph()
-        run = para.add_run(text)
+        run = para.add_run(clean_text)
 
+        # ✅ Keep formatting rules
         if is_section_header:
             run.bold = True
             add_bottom_border(para)
 
-        elif current_section == "work experience" and "|" in text and not text.startswith("•"):
+        elif current_section == "work experience" and "|" in clean_text and not clean_text.startswith("•"):
             run.bold = True
 
-        elif current_section == "projects" and not text.startswith("•"):
+        elif current_section == "projects" and not clean_text.startswith("•"):
             run.bold = True
 
-        # ✅ No need for bolding '**' anymore — already cleaned
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         para.paragraph_format.space_after = Pt(2)
         para.paragraph_format.line_spacing = 1.0
