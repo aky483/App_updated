@@ -45,6 +45,9 @@ def extract_resume_text(uploaded_file):
 def generate_cv(resume_text, job_description, target_match, template, sections, quantitative_focus, action_verb_intensity, keyword_matching):
     """Generate optimized CV using Gemini AI"""
     
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    
     # Build sections string
     sections_list = [section for section, include in sections.items() if include]
     sections_string = ", ".join(sections_list)
@@ -130,12 +133,10 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
         if not client:
             raise Exception("Gemini AI client not initialized")
         
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="text/plain",
-                temperature=0.2  # Lower temperature for more focused output
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.2
             )
         )
         
