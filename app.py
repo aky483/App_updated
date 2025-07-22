@@ -722,13 +722,7 @@ def create_word_document(content):
             run.bold = True
 
         elif '**' in text:
-            para.clear()
-            parts = re.split(r'(\*\*.*?\*\*)', text)
-            for part in parts:
-                clean = part.replace('**', '')
-                r = para.add_run(clean)
-                if part.startswith('**') and part.endswith('**'):
-                    r.bold = True
+            run.text = text.replace("**", "")  # 🔴 Removed bolding logic
 
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         para.paragraph_format.space_after = Pt(2)
