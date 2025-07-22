@@ -4,19 +4,20 @@ import json
 from datetime import datetime
 import PyPDF2 as pdf
 from docx import Document
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai import types
 from pydantic import BaseModel
 from utils import optimize_keywords, enforce_page_limit
 from dotenv import load_dotenv
 
-load_dotenv()
+os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 
 # Initialize Gemini client
 try:
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    client = genai.GenerativeModel("gemini-2.5-flash")
 except Exception as e:
-    print(f"Error initializing Gemini client: {e}")
+    print(f"Error initializing Gemini client in utils: {e}")
     client = None
 
 class CVOptimization(BaseModel):
