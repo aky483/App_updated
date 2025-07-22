@@ -373,8 +373,9 @@ def show_cv_generation_page():
                 col1, col2, col3 = st.columns(3)
 
                 with col1:
+                    clean_preview = st.session_state.cv_preview.replace("**", "")  # ✅ Strip asterisks for PDF
                     pdf_buffer = apply_template(
-                        st.session_state.cv_preview,
+                        clean_preview,
                         st.session_state.selected_template
                     )
                     st.download_button(
