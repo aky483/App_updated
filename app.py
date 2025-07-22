@@ -763,37 +763,44 @@ def analyze_ats_compatibility():
             for keyword in analysis['missing_keywords'][:5]:  # Show only first 5
                 st.markdown(f"• {keyword}")
 
+# def check_user_access():
+#     """Check if user has sufficient credits or active subscription"""
+#     user_email = st.session_state.user_data['email']
+    
+#     # Check subscription first
+#     subscription = check_subscription(user_email)
+#     if subscription:
+#         return True
+    
+#     # Check credits
+#     credits = get_user_credits(user_email)
+#     return credits > 0
 def check_user_access():
-    """Check if user has sufficient credits or active subscription"""
-    user_email = st.session_state.user_data['email']
-    
-    # Check subscription first
-    subscription = check_subscription(user_email)
-    if subscription:
-        return True
-    
-    # Check credits
-    credits = get_user_credits(user_email)
-    return credits > 0
+    """Temporarily allow access without checking credits or subscription"""
+    return True  # 🔓 Credit check bypassed for testing
 
+# def deduct_user_credits(email, amount):
+#     """Deduct credits from user account"""
+#     try:
+#         conn = get_db_connection()
+#         cursor = conn.cursor()
+        
+#         cursor.execute("""
+#             UPDATE users SET credits = credits - %s 
+#             WHERE email = %s AND credits >= %s
+#         """, (amount, email, amount))
+        
+#         conn.commit()
+#         cursor.close()
+#         conn.close()
+#         return True
+#     except Exception as e:
+#         st.error(f"Error deducting credits: {str(e)}")
+#         return False
 def deduct_user_credits(email, amount):
-    """Deduct credits from user account"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE users SET credits = credits - %s 
-            WHERE email = %s AND credits >= %s
-        """, (amount, email, amount))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return True
-    except Exception as e:
-        st.error(f"Error deducting credits: {str(e)}")
-        return False
+    """Temporarily disable credit deduction for testing"""
+    return True  # 🔓 Credit deduction skipped for testing
+
 
 def show_payment_page():
     """Show payment processing page"""
