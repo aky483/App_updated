@@ -274,16 +274,16 @@ def analyze_cv_ats_score(cv_content, job_description):
 
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel("gemini-2.5-flash")
-    
+
     prompt = f"""
     You are an ATS analysis expert.
-    
+
     Analyze the CV against the job description and provide:
     1. ATS compatibility score (0-100)
     2. Keyword match percentage
     3. Missing critical keywords
     4. Specific improvement suggestions
-    
+
     Return JSON format:
     {{
         "ats_score": number,
@@ -291,32 +291,34 @@ def analyze_cv_ats_score(cv_content, job_description):
         "missing_keywords": [list],
         "suggestions": [list]
     }}
-    
+
     CV Content:
     {cv_content}
-    
+
     Job Description:
     {job_description}
     """
-    
+
     try:
-        if not client:
-            raise Exception("Gemini AI client not initialized")
-        
         response = model.generate_content(
             prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.3
+            generation_config=types.GenerationConfig(
+                temperature=0.2
             )
         )
 
         if not response or not response.text:
             raise Exception("AI response was empty or None")
-        
-        try:
-            parsed = json.loads(response.text)
-        except Exception as parse_err:
-            raise Exception(f"Invalid JSON response from Gemini: {response.text}")
+
+        raw_text = response.text.strip()
+
+        # 🔧 Remove Markdown code block formatting if present
+        if raw_text.startswith("```json"):
+            raw_text = re.sub(r"^```json\s*", "", raw_text)
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3].strip()
+
+        parsed = json.loads(raw_text)
 
         return {
             "score": parsed.get("ats_score", 0),
@@ -326,7 +328,6 @@ def analyze_cv_ats_score(cv_content, job_description):
         }
 
     except Exception as e:
-        # Final fallback if AI fails entirely
         return {
             "score": 0,
             "keyword_match": 0,
