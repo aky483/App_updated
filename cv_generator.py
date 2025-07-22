@@ -204,6 +204,9 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
 def generate_cover_letter(resume_text, job_description):
     """Generate cover letter using Gemini AI"""
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = f"""
     You are a professional cover letter writer.
@@ -236,10 +239,7 @@ def generate_cover_letter(resume_text, job_description):
         if not client:
             raise Exception("Gemini AI client not initialized")
         
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         
         if not response or not response.text:
             raise Exception("AI response was empty or None")
