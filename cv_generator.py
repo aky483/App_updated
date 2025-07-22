@@ -271,6 +271,9 @@ def clean_cv_content(content):
 
 def analyze_cv_ats_score(cv_content, job_description):
     """Analyze CV ATS compatibility score using Gemini AI"""
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = f"""
     You are an ATS analysis expert.
@@ -300,11 +303,10 @@ def analyze_cv_ats_score(cv_content, job_description):
         if not client:
             raise Exception("Gemini AI client not initialized")
         
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3
             )
         )
 
