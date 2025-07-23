@@ -823,27 +823,32 @@ def add_bottom_border(paragraph):
 
 def show_interview_qa_page():
     st.markdown("## 🤖 Interview Preparation Q&A")
-    st.markdown("Generate personalized interview questions and answers based on your resume and the job description.")
+    st.markdown("Generate personalized interview questions and answers based on your uploaded resume and the job description.")
 
+    # Retrieve Job Description and uploaded file from session
     jd = st.session_state.get('job_description', '')
-    resume_text = ""
+    uploaded_file = st.session_state.get('uploaded_resume', None)
 
-    # Use optimized CV if available; else use extracted resume text
-    if 'cv_preview' in st.session_state and st.session_state.cv_preview:
-        resume_text = st.session_state.cv_preview
-    else:
-        st.info("⚠️ Please generate your CV first under 'Match Me to the Job' tab.")
+    # If resume uploaded in Match Me tab, keep it
+    if not uploaded_file:
+        uploaded_file = st.file_uploader("📄 Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
+        if uploaded_file:
+            st.session_state.uploaded_resume = uploaded_file
 
-    if jd and resume_text:
+    if jd.strip() and uploaded_file:
         if st.button("🎤 Generate Interview Q&A"):
             with st.spinner("Generating interview Q&A... Please wait"):
                 try:
+                    # Extract resume text from file
+                    resume_text = extract_resume_text(uploaded_file)
+
+                    # Generate Q&A using Gemini
                     qa_content = generate_interview_qa(resume_text, jd)
 
                     st.markdown("### 📌 Suggested Questions & Answers")
                     st.markdown(qa_content)
 
-                    # Download as PDF/DOCX
+                    # Export options
                     pdf_buffer, docx_buffer = export_interview_qa(qa_content)
 
                     col1, col2 = st.columns(2)
@@ -852,13 +857,13 @@ def show_interview_qa_page():
                     with col2:
                         st.download_button("📥 Download DOCX", data=docx_buffer, file_name="interview_QA.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
-                    # Deduct credits for Q&A generation
+                    # Deduct credits
                     deduct_user_credits(st.session_state.user_data['email'], 1)
 
                 except Exception as e:
                     st.error(f"❌ Error generating Q&A: {str(e)}")
     else:
-        st.warning("Please ensure Job Description and CV are available.")
+        st.warning("Please upload your resume and provide the job description in Tab 1.")
 
 
 if __name__ == "__main__":
