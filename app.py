@@ -234,6 +234,11 @@ def show_cv_generation_page():
         placeholder="Copy and paste the complete job description...",
         key="jd_input"
     )
+    # ✅ Add Clear JD Button
+    if st.button("🧹 Clear JD", help="Click to clear the job description text"):
+        st.session_state.jd_input = ""  # Clears the text area
+        st.session_state.job_description = ""  # Clears stored JD
+        st.experimental_rerun()
 
     # ✅ Save JD in session for Q&A tab
     if jd.strip():
