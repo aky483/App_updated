@@ -416,7 +416,8 @@ def generate_interview_qa(resume_text, job_description):
         response = client.generate_content(
             prompt,
             generation_config=types.GenerationConfig(
-                temperature=0.2
+                temperature=0.2,
+                max_output_tokens=4000  # Ensures full response
             )
         )
 
@@ -424,6 +425,9 @@ def generate_interview_qa(resume_text, job_description):
             raise Exception("AI response was empty")
 
         return response.text
+
+    except Exception as e:
+        raise Exception(f"Error generating Q&A: {str(e)}")
 
 
 def export_interview_qa(content):
