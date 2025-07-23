@@ -727,7 +727,7 @@ def show_interview_qa_page():
     jd = st.session_state.get('job_description', '')
     uploaded_file = st.session_state.get('uploaded_resume', None)
 
-    # If resume uploaded in Match Me tab, keep it
+    # If resume not in session, allow upload here
     if not uploaded_file:
         uploaded_file = st.file_uploader("📄 Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
         if uploaded_file:
@@ -742,32 +742,47 @@ def show_interview_qa_page():
                     <p style="margin-top: 10px; font-weight:bold; font-size:16px;">⏳ Generating interview Q&A... Please wait</p>
                 </div>
             """, unsafe_allow_html=True)
-        
+
             try:
+                # Extract resume text
                 resume_text = extract_resume_text(uploaded_file)
+
+                # Generate Q&A
                 qa_content = generate_interview_qa(resume_text, jd)
-        
-                # Clear loading icon
+
+                # Remove loading icon
                 loading_placeholder.empty()
-        
+
+                # Display Q&A
                 st.markdown("### 📌 Suggested Questions & Answers")
                 st.markdown(qa_content)
 
+                # Export options
+                pdf_buffer, docx_buffer = export_interview_qa(qa_content)
 
-                    # Export options
-                    pdf_buffer, docx_buffer = export_interview_qa(qa_content)
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        "📥 Download PDF",
+                        data=pdf_buffer,
+                        file_name="interview_QA.pdf",
+                        mime="application/pdf"
+                    )
+                with col2:
+                    st.download_button(
+                        "📥 Download DOCX",
+                        data=docx_buffer,
+                        file_name="interview_QA.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
 
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.download_button("📥 Download PDF", data=pdf_buffer, file_name="interview_QA.pdf", mime="application/pdf")
-                    with col2:
-                        st.download_button("📥 Download DOCX", data=docx_buffer, file_name="interview_QA.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                # Deduct credits
+                deduct_user_credits(st.session_state.user_data['email'], 1)
 
-                    # Deduct credits
-                    deduct_user_credits(st.session_state.user_data['email'], 1)
+            except Exception as e:
+                loading_placeholder.empty()
+                st.error(f"❌ Error generating Q&A: {str(e)}")
 
-                except Exception as e:
-                    st.error(f"❌ Error generating Q&A: {str(e)}")
     else:
         st.warning("Please upload your resume and provide the job description in Tab 1.")
 
