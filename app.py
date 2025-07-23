@@ -225,7 +225,7 @@ def show_login_page():
 def show_cv_generation_page():
     """Main CV generation interface"""
     st.markdown("## 🎯 Match Me to the Job")
-    
+
     # Job Description Input
     st.markdown("### 📋 Job Description")
     jd = st.text_area(
@@ -234,13 +234,16 @@ def show_cv_generation_page():
         placeholder="Copy and paste the complete job description...",
         key="jd_input"
     )
-    
-    st.session_state.auto_save['job_description'] = jd
-    
+
+    # ✅ Save JD in session for Q&A tab
+    if jd.strip():
+        st.session_state.job_description = jd
+        st.session_state.auto_save['job_description'] = jd
+
     if jd.strip():
         with st.expander("📝 Job Description Preview"):
             st.code(jd, language="markdown")
-    
+
     # Resume Upload
     st.markdown("### 📄 Upload Your Resume")
     uploaded_file = st.file_uploader(
@@ -249,7 +252,11 @@ def show_cv_generation_page():
         help="Upload your existing resume in PDF or DOCX format"
     )
 
-    # ATS Score Check Button
+    # ✅ Save resume in session for Q&A tab
+    if uploaded_file:
+        st.session_state.uploaded_resume = uploaded_file
+
+    # ATS Score Check
     if uploaded_file and jd.strip():
         if st.button("📊 Check ATS Score"):
             try:
@@ -257,35 +264,35 @@ def show_cv_generation_page():
                 analysis = analyze_cv_ats_score(resume_text, jd)
 
                 col1, col2 = st.columns(2)
-
-                col1, col2 = st.columns(2)
-
                 with col1:
                     st.metric("ATS Score", f"{analysis['score']}%")
                     st.progress(analysis['score'] / 100)
-
                     if analysis['score'] < 32:
-                        st.warning("⚠️ Your ATS score is critically low. Consider rewriting your resume to align better with the job description.")
-
-
+                        st.warning("⚠️ Your ATS score is critically low.")
                 with col2:
                     st.metric("Keyword Match", f"{analysis['keyword_match']}%")
                     st.progress(analysis['keyword_match'] / 100)
 
+                # Show suggestions
                 if analysis.get('suggestions'):
                     st.markdown("### 💡 Improvement Suggestions")
                     for suggestion in analysis['suggestions']:
                         st.markdown(f"• {suggestion}")
 
+                # Show missing keywords
                 if analysis.get('missing_keywords'):
                     st.markdown("### 🔍 Missing Keywords")
-                    for keyword in analysis['missing_keywords'][:5]:  # show only top 5
+                    for keyword in analysis['missing_keywords'][:5]:
                         st.markdown(f"• {keyword}")
 
+                # ✅ Deduct credit
                 deduct_user_credits(st.session_state.user_data['email'], 1)
 
             except Exception as e:
                 st.error(f"❌ Error analyzing ATS score: {str(e)}")
+    else:
+        st.info("Please upload your resume and enter a job description to check ATS score.")
+
 
     
     # Target Match Percentage
@@ -420,115 +427,6 @@ def show_cv_generation_page():
                 st.error(f"❌ Error generating CV: {str(e)}")
         else:
             st.warning("⚠️ Please upload your resume and provide a job description")
-    
-    # Generate Cover Letter
-    if generate_cover_letter_btn:
-        if uploaded_file and jd.strip():
-            if not check_user_access():
-                st.error("⚠️ Insufficient credits. Please purchase more credits or upgrade your subscription.")
-                return
-
-            loading_placeholder = st.empty()
-            loading_placeholder.markdown("""
-                <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
-                    <div class="custom-loader"></div>
-                    <p style="margin-top: 10px;">📝 Generating cover letter... Please wait</p>
-                </div>
-            """, unsafe_allow_html=True)
-
-            time.sleep(0.5)
-
-            try:
-                resume_text = extract_resume_text(uploaded_file)
-                cover_letter = generate_cover_letter(resume_text, jd)
-
-                loading_placeholder.empty()
-
-                st.session_state.cover_letter = cover_letter
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import letter
-                from io import BytesIO
-                from docx import Document
-
-                with st.expander("📄 Generated Cover Letter"):
-                    from io import BytesIO
-                    from reportlab.lib.pagesizes import letter
-                    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-                    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-                    from reportlab.lib.enums import TA_JUSTIFY
-                    from reportlab.lib.units import inch
-                    from docx import Document
-                    from docx.shared import Pt
-                    from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-                    # Display in UI
-                    st.markdown(cover_letter)
-
-                    # ===== PDF EXPORT WITH JUSTIFIED TEXT =====
-                    pdf_buffer = BytesIO()
-
-                    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter,
-                                            rightMargin=50, leftMargin=50,
-                                            topMargin=50, bottomMargin=50)
-
-                    styles = getSampleStyleSheet()
-                    justified_style = ParagraphStyle(
-                        name='Justified',
-                        parent=styles['Normal'],
-                        alignment=TA_JUSTIFY,
-                        fontName='Helvetica',
-                        fontSize=11,
-                        leading=16
-                    )
-
-                    flowables = []
-                    for paragraph in cover_letter.strip().split('\n'):
-                        if paragraph.strip():
-                            para = Paragraph(paragraph.strip(), justified_style)
-                            flowables.append(para)
-                            flowables.append(Spacer(1, 0.2 * inch))
-
-                    doc.build(flowables)
-                    pdf_buffer.seek(0)
-
-                    st.download_button(
-                        label="📥 Download as PDF",
-                        data=pdf_buffer,
-                        file_name="cover_letter.pdf",
-                        mime="application/pdf"
-                    )
-
-                    # ===== DOCX EXPORT WITH JUSTIFIED TEXT =====
-                    docx_buffer = BytesIO()
-                    doc = Document()
-
-                    # Set base font and size
-                    style = doc.styles['Normal']
-                    font = style.font
-                    font.name = 'Calibri'
-                    font.size = Pt(11)
-
-                    for paragraph in cover_letter.strip().split('\n'):
-                        if paragraph.strip():
-                            para = doc.add_paragraph(paragraph.strip())
-                            para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-
-                    doc.save(docx_buffer)
-                    docx_buffer.seek(0)
-
-                    st.download_button(
-                        label="📥 Download as Word",
-                        data=docx_buffer,
-                        file_name="cover_letter.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    )
-
-
-                deduct_user_credits(st.session_state.user_data['email'], 1)
-
-            except Exception as e:
-                loading_placeholder.empty()
-                st.error(f"❌ Error generating cover letter: {str(e)}")
 
 def show_preview_page():
     """CV preview and download page"""
