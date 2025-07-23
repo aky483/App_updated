@@ -375,19 +375,33 @@ def generate_interview_qa(resume_text, job_description):
     prompt = f"""
     You are an expert career coach and interviewer.
 
-    Based on the candidate's resume and the job description, create a set of 10 highly relevant interview questions and their suggested answers.
+    TASK:
+    Generate **exactly 20 interview questions and answers** for the candidate based on their resume and the job description.
 
-    Guidelines:
-    1. List all the important ATS skills.
-    2. Create unique interview questions 100% aligned to the JD, CV and ATS words.
-    3. Do not repeat the questions.
-    4. Do not repeat answers.
-    5. Answers to every question must be pointwise, 6-7 points for every question.
-    6. 8 Behavioral questions including about the company and yourself, how do you fit in? Why should we hire you? Why did you apply for this role etc and 12 advanced Technical questions related to the skills.
-    - Format:
-        Q1: [Question]
-        A1: [Answer]
-        Q2: ...
+    ✅ Structure:
+    - 8 Behavioral questions (fitment, company, teamwork, problem-solving, adaptability)
+    - 12 Technical questions based on ATS keywords, JD tools, frameworks, and skills.
+
+    ✅ Format STRICTLY:
+    Q1: [Behavioral Question]
+    A1:
+    - Point 1
+    - Point 2
+    - Point 3
+    - Point 4
+    - Point 5
+    - Point 6
+
+    Q2: [Next Question]
+    A2:
+    - ...
+
+    ✅ Rules:
+    - All answers MUST have **6 bullet points minimum**.
+    - No repetition of questions or answers.
+    - Technical questions should be advanced and role-specific.
+    - Cover JD-specific tools, methods, and problem scenarios.
+    - Include the most important ATS keywords in both questions and answers.
 
     Resume:
     {resume_text}
@@ -398,12 +412,11 @@ def generate_interview_qa(resume_text, job_description):
     if not client:
         raise Exception("Gemini AI client not initialized")
 
-    response = model.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
     if not response or not response.text:
         raise Exception("AI response was empty")
 
     return response.text
-
 
 def export_interview_qa(content):
     """Export Q&A content as PDF and DOCX"""
