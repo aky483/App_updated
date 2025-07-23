@@ -369,3 +369,68 @@ def enhance_action_verbs(content, intensity="High"):
     # This would be implemented with more sophisticated text processing
     # For now, return the content as-is
     return content
+
+def generate_interview_qa(resume_text, job_description):
+    """Generate interview Q&A using Gemini AI"""
+    prompt = f"""
+    You are an expert career coach and interviewer.
+
+    Based on the candidate's resume and the job description, create a set of 10 highly relevant interview questions and their suggested answers.
+
+    Guidelines:
+    1. List all the important ATS skills.
+    2. Create unique interview questions 100% aligned to the JD, CV and ATS words.
+    3. Do not repeat the questions.
+    4. Do not repeat answers.
+    5. Answers to every question must be pointwise, 6-7 points for every question.
+    6. 8 Behavioral questions including about the company and yourself, how do you fit in? Why should we hire you? Why did you apply for this role etc and 12 advanced Technical questions related to the skills.
+    - Format:
+        Q1: [Question]
+        A1: [Answer]
+        Q2: ...
+
+    Resume:
+    {resume_text}
+
+    Job Description:
+    {job_description}
+    """
+    if not client:
+        raise Exception("Gemini AI client not initialized")
+
+    response = model.generate_content(model="gemini-2.5-flash", contents=prompt)
+    if not response or not response.text:
+        raise Exception("AI response was empty")
+
+    return response.text
+
+
+def export_interview_qa(content):
+    """Export Q&A content as PDF and DOCX"""
+    from io import BytesIO
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    from docx import Document
+
+    # PDF Export
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer)
+    styles = getSampleStyleSheet()
+    story = []
+    for line in content.split('\n'):
+        if line.strip():
+            story.append(Paragraph(line.strip(), styles['Normal']))
+            story.append(Spacer(1, 12))
+    doc.build(story)
+    pdf_buffer.seek(0)
+
+    # DOCX Export
+    docx_buffer = BytesIO()
+    word_doc = Document()
+    for line in content.split('\n'):
+        if line.strip():
+            word_doc.add_paragraph(line.strip())
+    word_doc.save(docx_buffer)
+    docx_buffer.seek(0)
+
+    return pdf_buffer, docx_buffer
