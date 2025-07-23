@@ -412,11 +412,19 @@ def generate_interview_qa(resume_text, job_description):
     if not client:
         raise Exception("Gemini AI client not initialized")
 
-    response = client.generate_content(model=model, contents=prompt)
-    if not response or not response.text:
-        raise Exception("AI response was empty")
+    try:
+        response = client.generate_content(
+            prompt,
+            generation_config=types.GenerationConfig(
+                temperature=0.2
+            )
+        )
 
-    return response.text
+        if not response or not response.text:
+            raise Exception("AI response was empty")
+
+        return response.text
+
 
 def export_interview_qa(content):
     """Export Q&A content as PDF and DOCX"""
