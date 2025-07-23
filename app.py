@@ -20,7 +20,7 @@ from docx.oxml.ns import qn
 from database import init_db, get_user_data, save_user_session, get_user_credits, get_db_connection
 from auth import authenticate_user, logout_user, get_current_user
 from payment import process_payment, check_subscription, apply_discount_code
-from cv_generator import generate_cv, generate_cover_letter, extract_resume_text, analyze_cv_ats_score
+from cv_generator import generate_cv, generate_cover_letter, extract_resume_text, analyze_cv_ats_score, generate_interview_qa, export_interview_qa
 from templates import get_available_templates, apply_template
 from utils import optimize_keywords, enforce_page_limit, get_gemini_response
 
@@ -150,16 +150,20 @@ def main():
 
     
     # Main content
-    tab1, tab2, tab3 = st.tabs(["🎯 Match Me to Job", "📊 Analytics", "💳 Billing"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🎯 Match Me to Job", "🤖 Interview Q&A", "📊 Analytics", "💳 Billing"])
 
     with tab1:
         show_cv_generation_page()
 
     with tab2:
-        show_analytics_page()
-
+        show_interview_qa_page()
+    
     with tab3:
+        show_analytics_page()
+    
+    with tab4:
         show_billing_page()
+
 
 def show_login_page():
     """Display login page"""
@@ -815,6 +819,46 @@ def add_bottom_border(paragraph):
     bottom.set(qn('w:color'), 'auto')
     borders.append(bottom)
     pPr.append(borders)
+
+
+def show_interview_qa_page():
+    st.markdown("## 🤖 Interview Preparation Q&A")
+    st.markdown("Generate personalized interview questions and answers based on your resume and the job description.")
+
+    jd = st.session_state.get('job_description', '')
+    resume_text = ""
+
+    # Use optimized CV if available; else use extracted resume text
+    if 'cv_preview' in st.session_state and st.session_state.cv_preview:
+        resume_text = st.session_state.cv_preview
+    else:
+        st.info("⚠️ Please generate your CV first under 'Match Me to the Job' tab.")
+
+    if jd and resume_text:
+        if st.button("🎤 Generate Interview Q&A"):
+            with st.spinner("Generating interview Q&A... Please wait"):
+                try:
+                    qa_content = generate_interview_qa(resume_text, jd)
+
+                    st.markdown("### 📌 Suggested Questions & Answers")
+                    st.markdown(qa_content)
+
+                    # Download as PDF/DOCX
+                    pdf_buffer, docx_buffer = export_interview_qa(qa_content)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button("📥 Download PDF", data=pdf_buffer, file_name="interview_QA.pdf", mime="application/pdf")
+                    with col2:
+                        st.download_button("📥 Download DOCX", data=docx_buffer, file_name="interview_QA.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+                    # Deduct credits for Q&A generation
+                    deduct_user_credits(st.session_state.user_data['email'], 1)
+
+                except Exception as e:
+                    st.error(f"❌ Error generating Q&A: {str(e)}")
+    else:
+        st.warning("Please ensure Job Description and CV are available.")
 
 
 if __name__ == "__main__":
