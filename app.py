@@ -226,6 +226,11 @@ def show_cv_generation_page():
     """Main CV generation interface"""
     st.markdown("## 🎯 Match Me to the Job")
 
+    # ✅ Define callback at the start of JD section
+    def clear_jd():
+        st.session_state.jd_input = ""
+        st.session_state.job_description = ""
+
     # Job Description Input
     st.markdown("### 📋 Job Description")
     jd = st.text_area(
@@ -234,11 +239,9 @@ def show_cv_generation_page():
         placeholder="Copy and paste the complete job description...",
         key="jd_input"
     )
-    # ✅ Add Clear JD Button
-    if st.button("🧹 Clear JD", help="Click to clear the job description text"):
-        st.session_state.jd_input = ""  # Clears the text area
-        st.session_state.job_description = ""  # Clears stored JD
-        st.experimental_rerun()
+
+    # ✅ Clear JD Button
+    st.button("🧹 Clear JD", help="Click to clear job description", on_click=clear_jd)
 
     # ✅ Save JD in session for Q&A tab
     if jd.strip():
