@@ -735,16 +735,24 @@ def show_interview_qa_page():
 
     if jd.strip() and uploaded_file:
         if st.button("🎤 Generate Interview Q&A"):
-            with st.spinner("Generating interview Q&A... Please wait"):
-                try:
-                    # Extract resume text from file
-                    resume_text = extract_resume_text(uploaded_file)
+            loading_placeholder = st.empty()  # Placeholder for loader
+            loading_placeholder.markdown("""
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
+                    <div class="custom-loader"></div>
+                    <p style="margin-top: 10px; font-weight:bold; font-size:16px;">⏳ Generating interview Q&A... Please wait</p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+            try:
+                resume_text = extract_resume_text(uploaded_file)
+                qa_content = generate_interview_qa(resume_text, jd)
+        
+                # Clear loading icon
+                loading_placeholder.empty()
+        
+                st.markdown("### 📌 Suggested Questions & Answers")
+                st.markdown(qa_content)
 
-                    # Generate Q&A using Gemini
-                    qa_content = generate_interview_qa(resume_text, jd)
-
-                    st.markdown("### 📌 Suggested Questions & Answers")
-                    st.markdown(qa_content)
 
                     # Export options
                     pdf_buffer, docx_buffer = export_interview_qa(qa_content)
