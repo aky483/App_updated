@@ -416,8 +416,7 @@ def generate_interview_qa(resume_text, job_description):
         response = client.generate_content(
             prompt,
             generation_config=types.GenerationConfig(
-                temperature=0.2,
-                max_output_tokens=4000  # Ensures full response
+                temperature=0.2
             )
         )
 
