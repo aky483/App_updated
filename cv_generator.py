@@ -412,7 +412,7 @@ def generate_interview_qa(resume_text, job_description):
     if not client:
         raise Exception("Gemini AI client not initialized")
 
-    response = client.models.generate_content(model=model, contents=prompt)
+    response = model.generate_content(model=model, contents=prompt)
     if not response or not response.text:
         raise Exception("AI response was empty")
 
