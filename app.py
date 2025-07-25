@@ -729,21 +729,44 @@ def add_bottom_border(paragraph):
 
 def show_interview_qa_page():
     st.markdown("## 🤖 Interview Preparation Q&A")
-    st.markdown("Generate personalized interview questions and answers based on your uploaded resume and the job description.")
+    st.markdown("Generate personalized interview questions and answers by entering a Job Description and uploading a Resume here (independent of Tab 1).")
 
-    # Retrieve Job Description and uploaded file from session
-    jd = st.session_state.get('job_description', '')
-    uploaded_file = st.session_state.get('uploaded_resume', None)
+    # ✅ JD Input for Tab 2
+    jd_tab2 = st.text_area(
+        "📋 Enter Job Description",
+        height=200,
+        placeholder="Paste the job description for which you want to generate interview Q&A",
+        key="jd_tab2_input"
+    )
 
-    # If resume not in session, allow upload here
-    if not uploaded_file:
-        uploaded_file = st.file_uploader("📄 Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
-        if uploaded_file:
-            st.session_state.uploaded_resume = uploaded_file
+    # ✅ Clear JD Button
+    def clear_jd_tab2():
+        st.session_state.jd_tab2_input = ""
 
-    if jd.strip() and uploaded_file:
-        if st.button("🎤 Generate Interview Q&A"):
-            loading_placeholder = st.empty()  # Placeholder for loader
+    st.button("🧹 Clear JD", help="Click to clear job description", on_click=clear_jd_tab2, key="clear_jd_tab2")
+
+    # ✅ Resume Upload for Tab 2
+    uploaded_resume_tab2 = st.file_uploader(
+        "📄 Upload your Resume (PDF/DOCX)",
+        type=["pdf", "docx"],
+        help="Upload the resume you want to use for Q&A generation",
+        key="resume_tab2_upload"
+    )
+
+    # ✅ Previews
+    if jd_tab2.strip():
+        with st.expander("📝 Job Description Preview"):
+            st.code(jd_tab2, language="markdown")
+
+    if uploaded_resume_tab2:
+        resume_text_preview = extract_resume_text(uploaded_resume_tab2)
+        with st.expander("📄 Resume Preview"):
+            st.text_area("Resume Content", resume_text_preview[:2000], height=300, disabled=True)
+
+    # ✅ Generate Q&A Button
+    if jd_tab2.strip() and uploaded_resume_tab2:
+        if st.button("🎤 Generate Interview Q&A", key="generate_qa_tab2"):
+            loading_placeholder = st.empty()
             loading_placeholder.markdown("""
                 <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
                     <div class="custom-loader"></div>
@@ -753,19 +776,18 @@ def show_interview_qa_page():
 
             try:
                 # Extract resume text
-                resume_text = extract_resume_text(uploaded_file)
+                resume_text_tab2 = extract_resume_text(uploaded_resume_tab2)
 
                 # Generate Q&A
-                qa_content = generate_interview_qa(resume_text, jd)
+                qa_content = generate_interview_qa(resume_text_tab2, jd_tab2)
 
-                # Remove loading icon
                 loading_placeholder.empty()
 
-                # Display Q&A
+                # ✅ Display Q&A
                 st.markdown("### 📌 Suggested Questions & Answers")
                 st.markdown(qa_content)
 
-                # Export options
+                # ✅ Export Options
                 pdf_buffer, docx_buffer = export_interview_qa(qa_content)
 
                 col1, col2 = st.columns(2)
@@ -774,17 +796,19 @@ def show_interview_qa_page():
                         "📥 Download PDF",
                         data=pdf_buffer,
                         file_name="interview_QA.pdf",
-                        mime="application/pdf"
+                        mime="application/pdf",
+                        key="download_pdf_tab2"
                     )
                 with col2:
                     st.download_button(
                         "📥 Download DOCX",
                         data=docx_buffer,
                         file_name="interview_QA.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        key="download_docx_tab2"
                     )
 
-                # Deduct credits
+                # ✅ Deduct credits
                 deduct_user_credits(st.session_state.user_data['email'], 1)
 
             except Exception as e:
@@ -792,7 +816,7 @@ def show_interview_qa_page():
                 st.error(f"❌ Error generating Q&A: {str(e)}")
 
     else:
-        st.warning("Please upload your resume and provide the job description in Tab 1.")
+        st.warning("Please provide both Job Description and Resume above to proceed.")
 
 
 if __name__ == "__main__":
