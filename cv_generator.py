@@ -8,9 +8,8 @@ from google.generativeai import genai
 from google.generativeai import types
 from pydantic import BaseModel
 from utils import optimize_keywords, enforce_page_limit
-from dotenv import load_dotenv
 
-load_dotenv()
+os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 
 # Initialize Gemini client
 try:
