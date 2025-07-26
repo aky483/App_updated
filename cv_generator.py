@@ -222,7 +222,7 @@ def generate_cover_letter(resume_text, job_description):
     """
 
     try:
-        if not client:
+        if not model:
             raise Exception("Gemini AI client not initialized")
         
         response = model.generate_content(
@@ -293,14 +293,13 @@ def analyze_cv_ats_score(cv_content, job_description):
     """
     
     try:
-        if not client:
+        if not model:
             raise Exception("Gemini AI client not initialized")
         
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+        response = model.generate_content(
+            prompt,  # or contents=prompt
+            generation_config=types.GenerationConfig(
+                temperature=0.2  # optional
             )
         )
 
@@ -402,10 +401,15 @@ def generate_interview_qa(resume_text, job_description):
     Job Description:
     {job_description}
     """
-    if not client:
+    if not model:
         raise Exception("Gemini AI client not initialized")
 
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = model.generate_content(
+        prompt,  # or contents=prompt
+        generation_config=types.GenerationConfig(
+            temperature=0.2  # optional
+        )
+    )
     if not response or not response.text:
         raise Exception("AI response was empty")
 
