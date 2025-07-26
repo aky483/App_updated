@@ -123,41 +123,18 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
     
     try:
-        if not client:
-            raise Exception("Gemini AI client not initialized")
         
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
                 temperature=0.2
-            )
         )
         
         # Handle different response conditions
         if not response:
             raise Exception("No response received from AI")
         
-        if response.candidates and len(response.candidates) > 0:
-            candidate = response.candidates[0]
-            if candidate.finish_reason.name == 'MAX_TOKENS':
-                # Try to get partial content
-                if candidate.content and candidate.content.parts:
-                    partial_text = ""
-                    for part in candidate.content.parts:
-                        if hasattr(part, 'text') and part.text:
-                            partial_text += part.text
-                    if partial_text:
-                        optimized_cv = partial_text
-                    else:
-                        raise Exception("MAX_TOKENS reached and no partial content available")
-                else:
-                    raise Exception("MAX_TOKENS reached and no content available")
-            elif not response.text:
-                raise Exception("AI response was empty")
-            else:
-                optimized_cv = response.text
-        else:
-            raise Exception("No candidates in response")
+        optimized_cv = response.text
         
 
         
