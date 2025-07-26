@@ -322,171 +322,173 @@ def show_cv_generation_page():
     with col2:
         generate_cover_letter_btn = st.button("📝 Generate Cover Letter")
     
-    # Generate CV
-    if generate_cv_btn:
+    # Generate Cover Letter
+    if generate_cover_letter_btn:
         if uploaded_file and jd.strip():
-            # Check credits/subscription
             if not check_user_access():
                 st.error("⚠️ Insufficient credits. Please purchase more credits or upgrade your subscription.")
                 return
-            
+    
             loading_placeholder = st.empty()
-
             loading_placeholder.markdown("""
                 <div style="display: flex; flex-direction: column; align-items: center; padding: 20px;">
                     <div class="custom-loader"></div>
-                    <p style="margin-top: 10px;">🔄 Optimizing your CV... Please wait</p>
+                    <p style="margin-top: 10px;">📝 Generating cover letter... Please wait</p>
                 </div>
             """, unsafe_allow_html=True)
-
-            
-            time.sleep(0.5)  # Optional: show loader briefly before real work starts
-            start_time = time.time()
-
-                
+    
+            time.sleep(0.5)
+    
             try:
-                # Extract resume text
                 resume_text = extract_resume_text(uploaded_file)
-                
-                # Generate optimized CV
-                sections_to_use = st.session_state.auto_save.get('sections', {
-                    "Professional Summary": True,
-                    "Key Skills": True,
-                    "Work Experience": True,
-                    "Education": True,
-                    "Certifications": True,
-                    "Projects": True,
-                    "Awards": False,
-                    "Languages": False,
-                    "Hobbies": False
-                })
-                
-                st.session_state["target_match"] = target_match
-
-                cv_content = generate_cv(
-                    resume_text=resume_text,
-                    job_description=jd,
-                    target_match=target_match,
-                    template=st.session_state.selected_template,
-                    sections=sections_to_use,
-                    quantitative_focus=60,
-                    action_verb_intensity="High",
-                    keyword_matching="Balanced"
-                )
-                
-                # Enforce 2-page limit
-                cv_content = enforce_page_limit(cv_content)
-                
-                # Store in session for preview
-                st.session_state.cv_preview = cv_content
-                st.session_state.job_description = jd  # Store JD for ATS analysis
+                cover_letter = generate_cover_letter(resume_text, jd)
+    
+                # ✅ Clean any Markdown markers like ** or *
+                cover_letter = re.sub(r'\*{1,2}', '', cover_letter)
+    
                 loading_placeholder.empty()
-                
-                processing_time = time.time() - start_time
-                
-                st.success(f"✅ CV generated successfully in {processing_time:.1f} seconds!")
-                # === Inline Preview and Download After Generation ===
-                st.markdown("### 👀 Your Optimized CV")
-
-                # Download buttons
-                col1, col2, col3 = st.columns(3)
-
-                with col1:
-                    clean_preview = st.session_state.cv_preview.replace("**", "")  # ✅ Strip asterisks for PDF
+                st.session_state.cover_letter = cover_letter
+    
+                from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.enums import TA_JUSTIFY
+                from reportlab.lib.pagesizes import letter
+                from reportlab.lib.units import inch
+                from io import BytesIO
+                from docx import Document
+                from docx.shared import Pt, Inches
+                from docx.enum.text import WD_ALIGN_PARAGRAPH
+    
+                with st.expander("📄 Generated Cover Letter"):
+                    # Display in UI
+                    st.markdown(cover_letter)
+    
+                    # ===== PDF EXPORT WITH FIXED MARGINS AND JUSTIFIED TEXT =====
+                    pdf_buffer = BytesIO()
+                    doc = SimpleDocTemplate(
+                        pdf_buffer,
+                        pagesize=letter,
+                        leftMargin=40, rightMargin=40,  # ✅ 0.4 inch
+                        topMargin=35, bottomMargin=35   # ✅ 0.5 inch
+                    )
+    
+                    styles = getSampleStyleSheet()
+                    justified_style = ParagraphStyle(
+                        name='Justified',
+                        parent=styles['Normal'],
+                        alignment=TA_JUSTIFY,
+                        fontName='Helvetica',
+                        fontSize=11,
+                        leading=16
+                    )
+    
+                    flowables = []
+                    for paragraph in cover_letter.strip().split('\n'):
+                        if paragraph.strip():
+                            para = Paragraph(paragraph.strip(), justified_style)
+                            flowables.append(para)
+                            flowables.append(Spacer(1, 0.2 * inch))
+    
+                    doc.build(flowables)
+                    pdf_buffer.seek(0)
+    
+                    st.download_button(
+                        label="📥 Download as PDF",
+                        data=pdf_buffer,
+                        file_name="cover_letter.pdf",
+                        mime="application/pdf"
+                    )
+    
+                    # ===== DOCX EXPORT WITH FIXED MARGINS AND JUSTIFIED TEXT =====
+                    docx_buffer = BytesIO()
+                    word_doc = Document()
+    
+                    # ✅ Apply same margins as CV
+                    for section in word_doc.sections:
+                        section.top_margin = Inches(0.5)
+                        section.bottom_margin = Inches(0.5)
+                        section.left_margin = Inches(0.4)
+                        section.right_margin = Inches(0.4)
+    
+                    # Set base font and size
+                    style = word_doc.styles['Normal']
+                    font = style.font
+                    font.name = 'Calibri'
+                    font.size = Pt(11)
+    
+                    for paragraph in cover_letter.strip().split('\n'):
+                        if paragraph.strip():
+                            para = word_doc.add_paragraph(paragraph.strip())
+                            para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    
+                    word_doc.save(docx_buffer)
+                    docx_buffer.seek(0)
+    
+                    st.download_button(
+                        label="📥 Download as Word",
+                        data=docx_buffer,
+                        file_name="cover_letter.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
+    
+                # Deduct credits
+                deduct_user_credits(st.session_state.user_data['email'], 1)
+    
+            except Exception as e:
+                loading_placeholder.empty()
+                st.error(f"❌ Error generating cover letter: {str(e)}")
+    
+    def show_preview_page():
+        """CV preview and download page"""
+        st.markdown("## 📄 CV Preview")
+        
+        if st.session_state.cv_preview:
+            st.markdown("### 👀 Your Optimized CV")
+            
+            # Preview options
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("📥 Download as PDF"):
                     pdf_buffer = apply_template(
-                        clean_preview,
+                        st.session_state.cv_preview,
                         st.session_state.selected_template
                     )
+                    
                     st.download_button(
-                        label="📥 Download PDF",
+                        label="📄 Download PDF",
                         data=pdf_buffer,
                         file_name="optimized_cv.pdf",
                         mime="application/pdf"
                     )
-
-                with col2:
+            
+            with col2:
+                if st.button("📄 Download as Word"):
                     docx_buffer = create_word_document(st.session_state.cv_preview)
+                    
                     st.download_button(
                         label="📄 Download DOCX",
                         data=docx_buffer,
                         file_name="optimized_cv.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     )
-
-                with col3:
-                    if st.button("🔄 Regenerate CV"):
-                        st.session_state.cv_preview = None
-                        st.rerun()
-
-                # Show preview content
-                st.markdown("### 📋 Preview Content")
-                st.markdown(st.session_state.cv_preview)
-
-                # Inline ATS Analysis
-                st.markdown("### 📊 ATS Analysis")
-                analyze_ats_compatibility()
-
-                st.info("🔍 Click on the 'CV Preview' tab to review your optimized CV")
-                
-                # Deduct credits
-                deduct_user_credits(st.session_state.user_data['email'], 1)
-                
-            except Exception as e:
-                st.error(f"❌ Error generating CV: {str(e)}")
+            
+            with col3:
+                if st.button("🔄 Regenerate"):
+                    st.session_state.cv_preview = None
+                    st.rerun()
+            
+            # Show preview
+            st.markdown("---")
+            st.markdown("### 📋 Preview Content")
+            st.markdown(st.session_state.cv_preview)
+            
+            # ATS Analysis - Show automatically
+            st.markdown("### 📊 ATS Analysis")
+            analyze_ats_compatibility()
+        
         else:
-            st.warning("⚠️ Please upload your resume and provide a job description")
-
-def show_preview_page():
-    """CV preview and download page"""
-    st.markdown("## 📄 CV Preview")
-    
-    if st.session_state.cv_preview:
-        st.markdown("### 👀 Your Optimized CV")
-        
-        # Preview options
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button("📥 Download as PDF"):
-                pdf_buffer = apply_template(
-                    st.session_state.cv_preview,
-                    st.session_state.selected_template
-                )
-                
-                st.download_button(
-                    label="📄 Download PDF",
-                    data=pdf_buffer,
-                    file_name="optimized_cv.pdf",
-                    mime="application/pdf"
-                )
-        
-        with col2:
-            if st.button("📄 Download as Word"):
-                docx_buffer = create_word_document(st.session_state.cv_preview)
-                
-                st.download_button(
-                    label="📄 Download DOCX",
-                    data=docx_buffer,
-                    file_name="optimized_cv.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
-        
-        with col3:
-            if st.button("🔄 Regenerate"):
-                st.session_state.cv_preview = None
-                st.rerun()
-        
-        # Show preview
-        st.markdown("---")
-        st.markdown("### 📋 Preview Content")
-        st.markdown(st.session_state.cv_preview)
-        
-        # ATS Analysis - Show automatically
-        st.markdown("### 📊 ATS Analysis")
-        analyze_ats_compatibility()
-    
-    else:
-        st.info("🔍 No CV preview available. Please generate a CV first.")
+            st.info("🔍 No CV preview available. Please generate a CV first.")
 
 def show_analytics_page():
     """Analytics dashboard"""
