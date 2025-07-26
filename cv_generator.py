@@ -13,13 +13,9 @@ from dotenv import load_dotenv
 
 os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 
-# Initialize Gemini client
-try:
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    client = genai.GenerativeModel("gemini-2.5-flash")
-except Exception as e:
-    print(f"Error initializing Gemini client in utils: {e}")
-    client = None
+# Initialize Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 class CVOptimization(BaseModel):
     """CV optimization response model"""
@@ -44,9 +40,6 @@ def extract_resume_text(uploaded_file):
 
 def generate_cv(resume_text, job_description, target_match, template, sections, quantitative_focus, action_verb_intensity, keyword_matching):
     """Generate optimized CV using Gemini AI"""
-    
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel("gemini-2.5-flash")
     
     # Build sections string
     sections_list = [section for section, include in sections.items() if include]
