@@ -11,9 +11,10 @@ from pydantic import BaseModel
 from utils import optimize_keywords, enforce_page_limit
 from dotenv import load_dotenv
 
+# Load API Key
 os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 
-# Initialize Gemini
+# Initialize Gemini globally
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
 
@@ -40,25 +41,24 @@ def extract_resume_text(uploaded_file):
 
 def generate_cv(resume_text, job_description, target_match, template, sections, quantitative_focus, action_verb_intensity, keyword_matching):
     """Generate optimized CV using Gemini AI"""
-    
+
     # Build sections string
     sections_list = [section for section, include in sections.items() if include]
     sections_string = ", ".join(sections_list)
-    
-    # Adjust prompt based on settings
+
     intensity_mapping = {
         "Moderate": "moderate use of action verbs",
         "High": "strong emphasis on action verbs",
         "Very High": "maximum use of powerful action verbs"
     }
-    
+
     matching_mapping = {
         "Conservative": "maintain authenticity while incorporating key terms",
         "Balanced": "strategically integrate job description keywords",
         "Aggressive": "maximize keyword density and exact phrase matching"
     }
-    
-    # Direct prompt for CV output only
+
+    # Prompt remains unchanged
     prompt = f"""
     You are a professional resume writer and an expert in ATS optimization and role alignment.
 
@@ -121,39 +121,26 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     {job_description}
     """
 
-    
     try:
-        
         response = model.generate_content(
             prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.2)
+            generation_config=types.GenerationConfig(temperature=0.2)
         )
-        
-        # Handle different response conditions
-        if not response:
-            raise Exception("No response received from AI")
-        
-        optimized_cv = response.text
-        
 
-        
-        # Clean up the response
-        optimized_cv = clean_cv_content(optimized_cv)
+        if not response or not response.text:
+            raise Exception("AI response was empty or None")
+
+        optimized_cv = clean_cv_content(response.text)
         optimized_cv = enforce_page_limit(optimized_cv)
 
         from utils import extract_keywords_from_text
-
         jd_keywords = extract_keywords_from_text(job_description)
 
         def bold_keywords_in_work_exp(cv_text, keywords):
             if "WORK EXPERIENCE:" not in cv_text:
                 return cv_text
-
             parts = cv_text.split("WORK EXPERIENCE:")
-            before = parts[0]
-            after = parts[1]
-
+            before, after = parts[0], parts[1]
             lines = after.split('\n')
             bolded_lines = []
             for line in lines:
@@ -162,19 +149,18 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
                         pattern = r'\b(' + re.escape(kw) + r')\b'
                         line = re.sub(pattern, r'**\1**', line, flags=re.IGNORECASE)
                 bolded_lines.append(line)
-
             return before + "WORK EXPERIENCE:\n" + '\n'.join(bolded_lines)
 
         optimized_cv = bold_keywords_in_work_exp(optimized_cv, jd_keywords)
 
         return optimized_cv.strip()
-        
+
     except Exception as e:
         raise Exception(f"Failed to generate CV: {str(e)}")
 
 def generate_cover_letter(resume_text, job_description):
     """Generate cover letter using Gemini AI"""
-    
+
     prompt = f"""
     You are an expert ATS-optimized cover letter writer.
     
@@ -210,51 +196,33 @@ def generate_cover_letter(resume_text, job_description):
     """
 
     try:
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
         response = model.generate_content(
             prompt,
-            generation_config={"temperature": 0.2}
+            generation_config=types.GenerationConfig(temperature=0.2)
         )
-        
+
         if not response or not response.text:
             raise Exception("AI response was empty or None")
-        
-        # ✅ Remove any markdown markers like ** or *
+
         cover_letter = re.sub(r'\*{1,2}', '', response.text)
-        
         return cover_letter.strip()
-        
+
     except Exception as e:
         raise Exception(f"Failed to generate cover letter: {str(e)}")
-        
 
 def clean_cv_content(content):
     """Clean and format CV content"""
     if not content:
         return "Error: No content received from AI"
-    
-    # Remove markdown formatting
     content = re.sub(r'\*\*', '', content)
     content = re.sub(r'__', '', content)
-    
-    # Remove excessive whitespace
     content = re.sub(r'\n{3,}', '\n\n', content)
-    
-    # Remove any hidden markers
     content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
-    
-    # Ensure proper section formatting
     content = re.sub(r'^([A-Z][A-Z\s]+):', r'\n\1:', content, flags=re.MULTILINE)
-    
     return content.strip()
 
 def analyze_cv_ats_score(cv_content, job_description):
     """Analyze CV ATS compatibility score using Gemini AI"""
-
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = f"""
     You are an ATS analysis expert.
@@ -283,17 +251,13 @@ def analyze_cv_ats_score(cv_content, job_description):
     try:
         response = model.generate_content(
             prompt,
-            generation_config=types.GenerationConfig(
-                temperature=0.2
-            )
+            generation_config=types.GenerationConfig(temperature=0.2)
         )
 
         if not response or not response.text:
             raise Exception("AI response was empty or None")
 
         raw_text = response.text.strip()
-
-        # 🔧 Remove Markdown code block formatting if present
         if raw_text.startswith("```json"):
             raw_text = re.sub(r"^```json\s*", "", raw_text)
         if raw_text.endswith("```"):
@@ -315,41 +279,6 @@ def analyze_cv_ats_score(cv_content, job_description):
             "missing_keywords": [],
             "suggestions": [f"Error analyzing CV: {str(e)}"]
         }
-
-def extract_key_metrics(cv_content):
-    """Extract quantifiable metrics from CV"""
-    # Pattern to find numbers and percentages
-    metrics_pattern = r'(\d+(?:\.\d+)?(?:%|K|M|B|k|m|b|\+|,\d+)*)'
-    
-    metrics = re.findall(metrics_pattern, cv_content)
-    
-    return {
-        'total_metrics': len(metrics),
-        'metrics_found': metrics,
-        'quantification_score': min(100, len(metrics) * 5)  # 5 points per metric, max 100
-    }
-
-def enhance_action_verbs(content, intensity="High"):
-    """Enhance action verbs in CV content"""
-    
-    action_verbs = {
-        "Moderate": [
-            "managed", "developed", "created", "implemented", "led", "coordinated",
-            "designed", "analyzed", "improved", "organized", "planned", "supervised"
-        ],
-        "High": [
-            "spearheaded", "orchestrated", "revolutionized", "transformed", "pioneered",
-            "architected", "optimized", "streamlined", "accelerated", "amplified"
-        ],
-        "Very High": [
-            "catapulted", "revolutionized", "masterminded", "propelled", "dominated",
-            "commanded", "conquered", "devastated", "obliterated", "annihilated"
-        ]
-    }
-    
-    # This would be implemented with more sophisticated text processing
-    # For now, return the content as-is
-    return content
 
 def generate_interview_qa(resume_text, job_description):
     """Generate interview Q&A using Gemini AI"""
@@ -390,15 +319,10 @@ def generate_interview_qa(resume_text, job_description):
     Job Description:
     {job_description}
     """
-    if not client:
-        raise Exception("Gemini AI client not initialized")
-
     try:
-        response = client.generate_content(
+        response = model.generate_content(
             prompt,
-            generation_config=types.GenerationConfig(
-                temperature=0.2
-            )
+            generation_config=types.GenerationConfig(temperature=0.2)
         )
 
         if not response or not response.text:
@@ -408,34 +332,3 @@ def generate_interview_qa(resume_text, job_description):
 
     except Exception as e:
         raise Exception(f"Error generating Q&A: {str(e)}")
-
-
-def export_interview_qa(content):
-    """Export Q&A content as PDF and DOCX"""
-    from io import BytesIO
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet
-    from docx import Document
-
-    # PDF Export
-    pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer)
-    styles = getSampleStyleSheet()
-    story = []
-    for line in content.split('\n'):
-        if line.strip():
-            story.append(Paragraph(line.strip(), styles['Normal']))
-            story.append(Spacer(1, 12))
-    doc.build(story)
-    pdf_buffer.seek(0)
-
-    # DOCX Export
-    docx_buffer = BytesIO()
-    word_doc = Document()
-    for line in content.split('\n'):
-        if line.strip():
-            word_doc.add_paragraph(line.strip())
-    word_doc.save(docx_buffer)
-    docx_buffer.seek(0)
-
-    return pdf_buffer, docx_buffer
