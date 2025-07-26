@@ -127,7 +127,7 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
-                temperature=0.2
+                temperature=0.2)
         )
         
         # Handle different response conditions
