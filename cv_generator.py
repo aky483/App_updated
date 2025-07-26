@@ -218,7 +218,7 @@ def generate_cover_letter(resume_text, job_description):
     - Start with: "Dear [Hiring Manager/Job Title],"
     - Middle: Showcase 2-3 accomplishments aligned to the JD
     - Close with: request for interview and polite sign-off
-    - After the sign-off, include the applicant's **email and phone number** (extract from resume)
+    - After the sign-off, include the applicant's email and phone number (extract from resume)
 
     Resume:
     {resume_text}
@@ -230,22 +230,20 @@ def generate_cover_letter(resume_text, job_description):
     """
 
     try:
-        if not client:
-            raise Exception("Gemini AI client not initialized")
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
+        response = model.generate_content(
+            prompt,
+            generation_config={"temperature": 0.2, "max_output_tokens": 1500}
         )
         
         if not response or not response.text:
             raise Exception("AI response was empty or None")
         
-        cover_letter = response.text
-
-        # ✅ Remove Markdown-style bold or italics
-        cover_letter = re.sub(r'\*{1,2}', '', cover_letter)
-
+        # ✅ Remove any markdown markers like ** or *
+        cover_letter = re.sub(r'\*{1,2}', '', response.text)
+        
         return cover_letter.strip()
         
     except Exception as e:
