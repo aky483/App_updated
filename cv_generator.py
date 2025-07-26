@@ -94,8 +94,8 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     KEY SKILLS:
     Skill 1, Skill 2.....
 
-    WORK EXPERIENCE:(keep the dates in the same format as given in resume)
-    Company | Role | Dates
+    WORK EXPERIENCE:(pick all the experiences in company given in resume)
+    Company | Role | Dates(keep the dates in the same format as given in resume)
     • Bullet 1
     • Bullet 2
 
