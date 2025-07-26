@@ -207,6 +207,7 @@ def generate_cover_letter(resume_text, job_description):
     
     prompt = f"""
     You are a professional cover letter writer.
+    Adjust keyword placements dynamically to optimize for 90%+ ATS match
 
     Start with: “Hello Hiring Manager,” and the line: “I am applying for the [exact job title] position.”
     Paragraph 1: Express enthusiasm using JD language. Include company-specific mission, values, or projects (scraped from their site) to show personalization
