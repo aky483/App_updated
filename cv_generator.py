@@ -204,20 +204,15 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
 def generate_cover_letter(resume_text, job_description):
     """Generate cover letter using Gemini AI"""
-
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = f"""
     You are a professional cover letter writer.
 
-    Create a compelling cover letter that:
-    1. Addresses the specific job requirements
-    2. Highlights relevant experience from the resume
-    3. Shows enthusiasm for the role and company
-    4. Maintains professional tone
-    5. Is concise (3-4 paragraphs)
-    6. Includes a strong opening and closing
+    Start with: “Hello Hiring Manager,” and the line: “I am applying for the [exact job title] position.”
+    Paragraph 1: Express enthusiasm using JD language. Include company-specific mission, values, or projects (scraped from their site) to show personalization
+    Paragraph 2: Match top 5 JD requirements using JD phrases and metrics-rich examples. Integrate 10+ keywords from the skills list
+    Paragraph 3: Match 2-3 JD outcome-based goals with identical phrasing and past success examples. Use similar industry terms and metric structures
+    Paragraph 4: Reaffirm 2 JD priorities. Close by offering measurable value in JD terminology. Maintain tone and formality level inferred from company communications
 
     Use this structure:
     - Start with: "Dear [Hiring Manager/Job Title],"
@@ -234,20 +229,28 @@ def generate_cover_letter(resume_text, job_description):
     Generate a professional cover letter in plain text format.
     """
 
-    
     try:
         if not client:
             raise Exception("Gemini AI client not initialized")
         
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         
         if not response or not response.text:
             raise Exception("AI response was empty or None")
         
-        return response.text
+        cover_letter = response.text
+
+        # ✅ Remove Markdown-style bold or italics
+        cover_letter = re.sub(r'\*{1,2}', '', cover_letter)
+
+        return cover_letter.strip()
         
     except Exception as e:
         raise Exception(f"Failed to generate cover letter: {str(e)}")
+        
 
 def clean_cv_content(content):
     """Clean and format CV content"""
