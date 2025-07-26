@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 import PyPDF2 as pdf
 from docx import Document
-from google.generativeai import genai
+import google.generativeai as genai
 from google.generativeai import types
 from pydantic import BaseModel
 from utils import optimize_keywords, enforce_page_limit
