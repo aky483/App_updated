@@ -206,28 +206,37 @@ def generate_cover_letter(resume_text, job_description):
     """Generate cover letter using Gemini AI"""
     
     prompt = f"""
-    You are a professional cover letter writer.
-    Adjust keyword placements dynamically to optimize for 90%+ ATS match
-
-    Start with: “Hello Hiring Manager,” and the line: “I am applying for the [exact job title] position.”
-    Paragraph 1: Express enthusiasm using JD language. Include company-specific mission, values, or projects (scraped from their site) to show personalization
-    Paragraph 2: Match top 5 JD requirements using JD phrases and metrics-rich examples. Integrate 10+ keywords from the skills list
-    Paragraph 3: Match 2-3 JD outcome-based goals with identical phrasing and past success examples. Use similar industry terms and metric structures
-    Paragraph 4: Reaffirm 2 JD priorities. Close by offering measurable value in JD terminology. Maintain tone and formality level inferred from company communications
-
-    Use this structure:
-    - Start with: "Dear [Hiring Manager/Job Title],"
-    - Middle: Showcase 2-3 accomplishments aligned to the JD
-    - Close with: request for interview and polite sign-off
-    - After the sign-off, include the applicant's email and phone number (extract from resume)
-
+    You are an expert ATS-optimized cover letter writer.
+    
+    Objective:
+    Generate a personalized, professional cover letter that achieves **90%+ ATS compatibility** and aligns precisely with the provided Job Description.
+    
+    Rules:
+    - Dynamically adjust keyword placement to ensure **high ATS score**.
+    - Start with: “Hello Hiring Manager,” and include the line: “I am applying for the [exact job title] position.”
+    - Use a tone that reflects professionalism and enthusiasm.
+    
+    Structure:
+    1. **Paragraph 1**: Express genuine enthusiasm using the company's mission and JD language. Include company-specific values, vision, and relevant projects to show personalization.
+    2. **Paragraph 2**: Align with the top 5 responsibilities in the JD. Provide **metrics-rich accomplishments** from the resume that demonstrate capability. Integrate at least **10 relevant keywords** from the JD (e.g., Python, SQL, machine learning, A/B testing, scikit-learn, AWS, Snowflake, dashboards, Spark, data-driven decision-making).
+    3. **Paragraph 3**: Highlight **2–3 JD outcome-based goals** (e.g., predictive models, actionable insights, collaboration with cross-functional teams) using similar phrasing and past success examples. Include any statistical analysis, testing, or ML exposure.
+    4. **Paragraph 4**: Reaffirm **2 key JD priorities**. Close by offering measurable value in JD terms. Request an interview and include a polite sign-off.
+    
+    Additional Requirements:
+    - Use **identical terminology from the JD** wherever possible (e.g., "predictive models," "statistical analyses," "machine learning frameworks").
+    - Mention **preferred skills** if applicable (e.g., AWS, Snowflake, Power BI).
+    - Keep tone formal yet engaging, max 4 paragraphs.
+    - After sign-off, include candidate's email and phone number (extract from resume).
+    
+    Inputs:
     Resume:
     {resume_text}
-
+    
     Job Description:
     {job_description}
-
-    Generate a professional cover letter in plain text format.
+    
+    Output:
+    Generate the final cover letter in **plain text** format without extra commentary.
     """
 
     try:
