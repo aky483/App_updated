@@ -122,7 +122,7 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
     
     try:
-        if not client:
+        if not model:
             raise Exception("Gemini AI client not initialized")
         
         response = model.generate_content(
