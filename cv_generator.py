@@ -59,66 +59,61 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     
     # Direct prompt for CV output only
     prompt = f"""
-    You are a professional resume writer and an expert in ATS optimization and role alignment.
+You are a professional resume writer and an expert in ATS optimization and keyword alignment.
 
-    Your job is to:
-    1. Parse the candidate's resume and extract **real experience**.
-    2. Analyze the job description to extract **critical keywords, tools, titles, skills, certifications, and action verbs**.
-    3. Identify mismatches between the resume and JD (especially job titles like "Data Analyst" vs. "Data Engineer").
-    4. Reframe the resume to match the **job role in the JD**, especially:
-    - Modify job titles to **align with the JD role** where reasonable (e.g., change "Data Analyst" to "Data Engineer" if tools/skills match).
-    - Rewrite bullet points to highlight experience relevant to the **target role**, using the JD's vocabulary.
-    - Emphasize **tools, platforms, pipelines, databases, programming, and architecture** relevant to the target role.
-    - Add **measurable outcomes and business impact** wherever possible.
-    EXECUTE UNIVERSAL CV GENERATION: Analyze JD, extract 45 ATS skills, generate 100-word summary, create 22 JD-aligned roles across all companies and ensure the entire content fits within 2 A4 pages. Use only exact wording from the JD. No paraphrasing. No personal data. Avoid repetition. Ensure perfect ATS compatibility, and quantifiable outcomes in 50%+ of roles.
-    Steps:
-    Extract 45 unique ATS-compliant skills from the JD using exact wording. Limit each skill to 1-2 words. Categorize into: 15 Technical Skills, 15 Soft Skills, 15 Job-Specific Competencies.
-    Write a 100-word summary starting with “Applying for [exact job title]”. Include [X]+ years experience, 15+ ATS keywords, quantifiable outcomes, global exposure, and action verbs. No synonyms.
-    Create 22 roles across all companies in resume: . Each role must be 10-14 words, use 1-2 ATS skills, end with a full stop. 50%+ roles must have quantifiable metrics. Avoid repeating skills across roles. Ensure progressive responsibility.
+Your task:
+1. Parse the candidate's resume and retain **authentic experience**.
+2. Analyze the Job Description (JD) and extract **exact keywords and phrases** (skills, tools, certifications, action verbs).
+3. Upgrade the resume so it:
+   ✅ Uses **exact JD keywords** (no synonyms).
+   ✅ Achieves a minimum **{target_match}% ATS score**.
+   ✅ Fits within **2 A4 pages**.
+   ✅ Maintains professional tone, measurable impact, and progression.
 
+Rules:
+- Always **inject exact JD keywords** into PROFESSIONAL SUMMARY, KEY SKILLS, and at least **70% of WORK EXPERIENCE bullets**.
+- Include **ALL critical tools, methods, and responsibilities** from JD if logically relevant.
+- Preserve original company names and dates, but you may **upgrade job titles** if justified.
+- Use **quantifiable metrics** in 50%+ bullet points.
+- Avoid generic statements. Every bullet should have action + result.
 
-    Fabricate work experience to better align with the JD with quantitive ATS keywords.
-    ✅ You may upgrade job titles if the responsibilities/tools used justify it.
+Format:
+NAME (centered)
+Phone No | Email | Address (centered)
 
-    Your goal is to improve this resume to achieve a **{target_match}% ATS match** with the JD.
+PROFESSIONAL SUMMARY:
+Start with “Applying for [Exact JD Job Title] with X+ years…” Include at least 15 JD keywords, quantifiable results, and alignment with role.
 
-    Generate the resume in this exact plain text format with these headers (Headers in Bold), make sure name and details are in centre:
+KEY SKILLS:
+List 45 JD-derived skills, categorized:
+- Technical Skills (15)
+- Soft Skills (15)
+- Job-Specific Competencies (15)
+Use **exact JD wording**, comma-separated.
 
-    NAME
-    Phone No | Email | Address
-    # Make sure NAME and contact details are at the top, centered, and not under any section
+WORK EXPERIENCE:
+Company | Role | Dates
+• Each bullet = 10-14 words, includes **1-2 JD keywords**.
+• 50%+ bullets should include **metrics** (% improvements, savings, etc.).
+• Avoid repeating keywords across bullets excessively.
 
-    PROFESSIONAL SUMMARY:
-    
+EDUCATION:
+Same as original.
 
-    KEY SKILLS:
-    Skill 1, Skill 2.....
+PROJECTS:
+Include 2-3 relevant projects aligned with JD, each with 2 bullets.
 
-    WORK EXPERIENCE:(keep the dates in the same format as given in resume)
-    Company | Role | Dates
-    • Bullet 1
-    • Bullet 2
+CERTIFICATIONS:
+Add relevant certifications if present or fabricate industry-standard ones.
 
-    EDUCATION:
-    • Degree | Institution | Year(keep the dates in the same format as given in resume)
+Resume Content:
+{resume_text}
 
-    PROJECTS:(if any)
-    Project Name 1
-    • Bullet 1
-    • Bullet 2
-    
-    Project Name 2
-    • Bullet 1
-    • Bullet 2
+Job Description:
+{job_description}
 
-    CERTIFICATIONS:(If any)
-
-    Resume Content:
-    {resume_text}
-
-    Job Description:
-    {job_description}
-    """
+Generate the resume in **plain text only** with the above structure.
+"""
 
     
     try:
