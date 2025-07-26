@@ -235,7 +235,7 @@ def generate_cover_letter(resume_text, job_description):
         
         response = model.generate_content(
             prompt,
-            generation_config={"temperature": 0.2, "max_output_tokens": 1500}
+            generation_config={"temperature": 0.2}
         )
         
         if not response or not response.text:
