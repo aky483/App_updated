@@ -118,6 +118,8 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     Job Description:
     {job_description}
 
+    """
+
     
     try:
         if not model:
