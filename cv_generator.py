@@ -66,7 +66,6 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     2. Analyze the job description to extract **critical keywords, tools, titles, skills, certifications, and action verbs**.
     3. Identify mismatches between the resume and JD (especially job titles like "Data Analyst" vs. "Data Engineer").
     4. Reframe the resume to match the **job role in the JD**, especially:
-    - Modify job titles to **align with the JD role** where reasonable (e.g., change "Data Analyst" to "Data Engineer" if tools/skills match).
     - Rewrite bullet points to highlight experience relevant to the **target role**, using the JD's vocabulary.
     - Emphasize **tools, platforms, pipelines, databases, programming, and architecture** relevant to the target role.
     - Add **measurable outcomes and business impact** wherever possible.
@@ -78,7 +77,7 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
 
     Fabricate work experience to better align with the JD with quantitive ATS keywords.
-    ✅ You may upgrade job titles if the responsibilities/tools used justify it.
+    Do not change the job title
 
     Your goal is to improve this resume to achieve a **{target_match}% ATS match** with the JD.
 
@@ -94,8 +93,8 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
     KEY SKILLS:
     Skill 1, Skill 2.....
 
-    WORK EXPERIENCE:(pick all the experiences in company given in resume)
-    Company | Role | Dates(keep the dates in the same format as given in resume)
+    WORK EXPERIENCE:(keep the dates in the same format as given in resume)
+    Company | Role | Dates
     • Bullet 1
     • Bullet 2
 
@@ -118,7 +117,6 @@ def generate_cv(resume_text, job_description, target_match, template, sections, 
 
     Job Description:
     {job_description}
-    """
 
     
     try:
